@@ -1,1 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aurelia - Voice-Activated Prayer App</title>
+    <meta name="description" content="A personalized prayer companion that generates meaningful prayers based on your specific needs and faith tradition.">
+    
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#ea9ab2">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Aurelia">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="/style.css" as="style">
+    <link rel="preload" href="/script.js" as="script">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="/style.css">
+    
+    <!-- Firebase SDK -->
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Aurelia - Voice-Activated Prayer App">
+    <meta property="og:description" content="Personalized prayers for your daily spiritual journey">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="/icon-512.png">
+    
+    <!-- Twitter Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Aurelia - Voice-Activated Prayer App">
+    <meta name="twitter:description" content="Personalized prayers for your daily spiritual journey">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-content">
+            <h1 class="loading-logo">Aurelia</h1>
+            <div class="loading-spinner"></div>
+            <p>Preparing your prayer companion...</p>
+        </div>
+    </div>
 
+    <div class="container" id="main-container" style="display: none;">
+        <!-- Firebase Setup Notice -->
+        <div class="firebase-setup" id="firebase-setup">
+            <h4>🔄 Setting up your personal prayer space...</h4>
+            <p>Aurelia is connecting to your secure prayer database.</p>
+            <div class="setup-spinner"></div>
+        </div>
+        
+        <div id="main-app" class="hidden">
+            <div class="header">
+                <h1 class="logo">Aurelia</h1>
+                <p class="tagline">A voice-activated prayer app for your specific needs.</p>
+            </div>
+            
+            <!-- User Authentication (Optional) -->
+            <div class="auth-section" id="auth-section">
+                <button class="auth-btn" onclick="signInAnonymously()">
+                    🔒 Start Private Session
+                </button>
+                <p class="auth-note">Your prayers are private and secure</p>
+            </div>
+            
+            <form id="prayer-form" class="hidden">
+                <div class="form-group">
+                    <label for="role">My Role:</label>
+                    <input type="text" id="role" placeholder="e.g., Mother, Student, Leader" autocomplete="off">
+                </div>
+                
+                <div class="form-group">
+                    <label for="feeling">I am feeling...</label>
+                    <input type="text" id="feeling" placeholder="e.g., Anxious, Grateful, Tired" autocomplete="off">
+                </div>
+                
+                <div class="form-group">
+                    <label for="time-of-day">Time of Day:</label>
+                    <select id="time-of-day">
+                        <option value="morning">Morning</option>
+                        <option value="afternoon">Afternoon</option>
+                        <option value="evening">Evening</option>
+                        <option value="night">Night</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="language">Choose Language:</label>
+                    <select id="language">
+                        <option value="english">English</option>
+                        <option value="french">Français</option>
+                        <option value="spanish">Español</option>
+                        <option value="portuguese">Português</option>
+                        <option value="italian">Italiano</option>
+                        <option value="german">Deutsch</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="religion">Choose Religion:</label>
+                    <select id="religion" class="religion-select">
+                        <option value="christian">Christian</option>
+                        <option value="muslim">Muslim</option>
+                        <option value="jewish">Jewish</option>
+                        <option value="hindu">Hindu</option>
+                        <option value="buddhist">Buddhist</option>
+                        <option value="interfaith">Interfaith/Spiritual</option>
+                        <option value="secular">Secular/Mindful</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="challenge">My challenge/need for prayer:</label>
+                    <textarea id="challenge" placeholder="I am struggling with... or I need strength for..." rows="4"></textarea>
+                </div>
+                
+                <button type="button" class="start-button" onclick="generatePrayer()">
+                    <span class="spinner" id="spinner"></span>
+                    <span class="mic-icon" id="mic-icon">🎤</span>
+                    <span id="button-text">Start Speaking</span>
+                </button>
+            </form>
+            
+            <!-- Prayer History -->
+            <div class="prayer-history hidden" id="prayer-history">
+                <h3>Recent Prayers</h3>
+                <div id="history-list"></div>
+            </div>
+            
+            <!-- Error/Success Messages -->
+            <div class="error-message" id="error-message"></div>
+            <div class="success-message" id="success-message"></div>
+            
+            <!-- Prayer Output -->
+            <div id="prayer-display" class="prayer-output hidden">
+                <div class="prayer-header">
+                    <h4 id="prayer-title">Your Personal Prayer</h4>
+                    <div class="prayer-actions">
+                        <button class="action-btn" onclick="speakPrayer()" title="Listen to prayer">
+                            🔊
+                        </button>
+                        <button class="action-btn" onclick="savePrayer()" title="Save prayer">
+                            💾
+                        </button>
+                        <button class="action-btn" onclick="sharePrayer()" title="Share prayer">
+                            📤
+                        </button>
+                    </div>
+                </div>
+                <div id="prayer-text" class="prayer-content"></div>
+                <div class="prayer-metadata">
+                    <span id="prayer-timestamp"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => console.log('SW registered'))
+                    .catch(error => console.log('SW registration failed'));
+            });
+        }
+    </script>
+    
+    <!-- Main Application Script -->
+    <script src="/script.js"></script>
+</body>
+</html>
