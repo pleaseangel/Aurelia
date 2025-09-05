@@ -33,31 +33,59 @@ exports.handler = async (event) => {
                 return 'Dear Heavenly Father,';
             case 'jewish':
                 return 'Adonai,';
-            case 'islamic':
+            case 'muslim':
                 return 'In the name of Allah, the Most Gracious, the Most Merciful.';
             case 'buddhist':
                 return 'May I find peace in this moment,';
             case 'hindu':
                 return 'Oh Divine One,';
-            case 'spiritual':
+            case 'interfaith/spiritual':
                 return 'Oh Universe,';
+            case 'secular/mindful':
+                return 'May I find clarity and strength,';
             default:
                 return 'To the Divine,';
         }
     };
+    
+    const getReligiousEnding = (religion) => {
+        switch(religion.toLowerCase()) {
+            case 'christian':
+                return 'Amen.';
+            case 'jewish':
+                return 'Amen.';
+            case 'muslim':
+                return 'Ameen.';
+            case 'buddhist':
+                return 'May all beings be happy and free from suffering.';
+            case 'hindu':
+                return 'Om Shanti.';
+            case 'interfaith/spiritual':
+                return 'And so it is.';
+            case 'secular/mindful':
+                return 'With gratitude and intention.';
+            default:
+                return 'Amen.';
+        }
+    };
+    
+    // Determine prayer length based on keywords
+    const isShortPrayer = ['grateful', 'thankful', 'happy', 'blessed', 'celebrating'].some(keyword => feeling.toLowerCase().includes(keyword));
+    const prayerLength = isShortPrayer ? '2 to 3 sentences' : '5 to 7 sentences';
 
     const religiousGreeting = getReligiousGreeting(religion);
+    const religiousEnding = getReligiousEnding(religion);
 
     const promptText = `Generate a heartfelt, calm, and uplifting prayer in the ${religion} tradition. The person is a ${role} feeling ${feeling}. It is ${timeOfDay}.
     The person has the following specific challenges or needs: "${challenge}".
-    The prayer should offer comfort, guidance, and hope, ending in a way that is appropriate for the ${religion} tradition.`;
+    The prayer should offer comfort, guidance, and hope, be ${prayerLength} long, and end with the appropriate religious phrase.`;
 
     // Step 1: Generate Prayer Text with Gemini
     const textPayload = {
       contents: [{ parts: [{ text: promptText }] }],
       tools: [{ "google_search": {} }],
       systemInstruction: {
-        parts: [{ text: `You are a kind and compassionate spiritual guide. Your sole purpose is to generate beautiful and personal prayers that offer comfort and hope. The prayers should be gentle and supportive, especially for a mother, and reflect a tone of faith and trust, specifically in the ${religion} tradition. The prayer should be 5 to 7 sentences long and always begin with the greeting: "${religiousGreeting}".` }]
+        parts: [{ text: `You are a kind and compassionate spiritual guide. Your sole purpose is to generate beautiful and personal prayers that offer comfort and hope. The prayers should be gentle and supportive, and reflect a tone of faith and trust, specifically in the ${religion} tradition. The prayer should be ${prayerLength} long, begin with "${religiousGreeting}", and end with "${religiousEnding}".` }]
       },
       model: "gemini-2.5-flash-preview-05-20"
     };
@@ -85,8 +113,8 @@ exports.handler = async (event) => {
       'es-US': 'Puck',
       'fr-FR': 'Zephyr',
       'pt-BR': 'Iapetus',
-      'ja-JP': 'Orus',
-      'hi-IN': 'Laomedeia'
+      'it-IT': 'Orus',
+      'de-DE': 'Leda'
     };
 
     // Step 2: Generate Prayer Audio with Gemini TTS
