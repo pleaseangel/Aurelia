@@ -21,7 +21,6 @@ exports.handler = async (event) => {
       body: JSON.stringify({ error: 'Method Not Allowed' }),
     };
   }
-
   try {
     const { role, feeling, timeOfDay, language, religion, challenge } = JSON.parse(event.body);
 
@@ -31,7 +30,7 @@ exports.handler = async (event) => {
     const promptText = `Generate a heartfelt, calm, and uplifting prayer in the ${religion} tradition in ${new Intl.DisplayNames(['en'], { type: 'language' }).of(language)}.
     The person is a ${role} feeling ${feeling}. It is ${timeOfDay}. 
     The person has the following specific challenges or needs: "${challenge}".
-    Keep the prayer concise and comforting, directly addressing the provided feelings and challenges.`;
+    Keep the prayer thoughtful and comforting, directly addressing the provided feelings and challenges.`;
 
     // Step 1: Generate Prayer Text with Gemini
     const textPayload = {
