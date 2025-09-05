@@ -1,19 +1,16 @@
-const fetch = require('node-fetch');
+// Replace your existing prayer generation logic with this enhanced version
 
 exports.handler = async (event) => {
-  // Set up CORS headers for the Netlify function
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
   };
 
-  // Handle preflight OPTIONS requests
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers };
   }
 
-  // Ensure it's a POST request
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
@@ -21,72 +18,66 @@ exports.handler = async (event) => {
       body: JSON.stringify({ error: 'Method Not Allowed' }),
     };
   }
+
   try {
     const { role, feeling, timeOfDay, language, religion, challenge } = JSON.parse(event.body);
 
     const apiKey = process.env.GEMINI_API_KEY;
     const apiBaseUrl = "https://generativelanguage.googleapis.com/v1beta/models/";
 
-    const getReligiousGreeting = (religion) => {
-        switch(religion.toLowerCase()) {
-            case 'christian':
-                return 'Dear Heavenly Father,';
-            case 'jewish':
-                return 'Adonai,';
-            case 'muslim':
-                return 'In the name of Allah, the Most Gracious, the Most Merciful.';
-            case 'buddhist':
-                return 'May I find peace in this moment,';
-            case 'hindu':
-                return 'Oh Divine One,';
-            case 'interfaith/spiritual':
-                return 'Oh Universe,';
-            case 'secular/mindful':
-                return 'May I find clarity and strength,';
-            default:
-                return 'To the Divine,';
-        }
-    };
+    // Get emotional context for enhanced personalization
+    const emotionalContext = getEmotionalContext(feeling, challenge);
     
-    const getReligiousEnding = (religion) => {
-        switch(religion.toLowerCase()) {
-            case 'christian':
-                return 'Amen.';
-            case 'jewish':
-                return 'Amen.';
-            case 'muslim':
-                return 'Ameen.';
-            case 'buddhist':
-                return 'May all beings be happy and free from suffering.';
-            case 'hindu':
-                return 'Om Shanti.';
-            case 'interfaith/spiritual':
-                return 'And so it is.';
-            case 'secular/mindful':
-                return 'With gratitude and intention.';
-            default:
-                return 'Amen.';
-        }
-    };
+    // Get authentic religious structure
+    const religiousGreeting = getReligiousGreeting(religion, emotionalContext, timeOfDay);
+    const religiousEnding = getReligiousEnding(religion, emotionalContext, timeOfDay);
+    const religiousGuidance = getReligiousSystemInstruction(religion, emotionalContext);
+    const transitionPhrases = getReligiousTransitionPhrases(religion);
     
-    // Determine prayer length based on keywords
-    const isShortPrayer = ['grateful', 'thankful', 'happy', 'blessed', 'celebrating'].some(keyword => feeling.toLowerCase().includes(keyword));
-    const prayerLength = isShortPrayer ? '2 to 3 sentences' : '5 to 7 sentences';
+    // Generate enhanced, contextual prompt
+    const enhancedPrompt = generateEnhancedPrompt(role, feeling, timeOfDay, religion, challenge, emotionalContext);
+    
+    // Determine prayer length based on emotional context
+    const prayerStructures = {
+        short: '2-3 sentences',
+        medium: '4-6 sentences', 
+        long: '6-8 sentences'
+    };
+    const prayerLength = prayerStructures[emotionalContext.config.length];
 
-    const religiousGreeting = getReligiousGreeting(religion);
-    const religiousEnding = getReligiousEnding(religion);
+    // Enhanced system instruction with religious authenticity
+    const systemInstruction = {
+        parts: [{ 
+            text: `You are a deeply compassionate spiritual guide with authentic knowledge of ${religion} prayer traditions.
 
-    const promptText = `Generate a heartfelt, calm, and uplifting prayer in the ${religion} tradition. The person is a ${role} feeling ${feeling}. It is ${timeOfDay}.
-    The person has the following specific challenges or needs: "${challenge}".
-    The prayer should offer comfort, guidance, and hope, be ${prayerLength} long, and end with the appropriate religious phrase.`;
+RELIGIOUS AUTHENTICITY REQUIREMENTS:
+${religiousGuidance}
 
-    // Step 1: Generate Prayer Text with Gemini
+STRUCTURAL REQUIREMENTS:
+- Begin with: "${religiousGreeting}"
+- End with: "${religiousEnding}"
+- Length: ${prayerLength}
+- Tone: ${emotionalContext.config.tone}
+- Focus: ${emotionalContext.config.focus}
+
+QUALITY STANDARDS:
+- Use authentic religious language and concepts appropriate to ${religion}
+- Address their specific role as ${role} and their feeling of ${feeling}
+- Directly address the challenge: "${challenge}"
+- Include appropriate transitional phrases that sound natural in ${religion} prayers
+- Avoid generic spiritual language - be specifically ${religion} in approach
+- Balance formal religious structure with personal, heartfelt content
+- Ensure the prayer would be recognized as authentically ${religion} by practitioners
+
+The prayer should sound like it came from someone deeply familiar with ${religion} prayer traditions, not a generic spiritual template.`
+        }]
+    };
+
+    // Step 1: Generate Prayer Text with enhanced prompt
     const textPayload = {
-      contents: [{ parts: [{ text: promptText }] }],
+      contents: [{ parts: [{ text: enhancedPrompt }] }],
       tools: [{ "google_search": {} }],
-      systemInstruction: {
-        parts: [{ text: `You are a kind and compassionate spiritual guide. Your sole purpose is to generate beautiful and personal prayers that offer comfort and hope. The prayers should be gentle and supportive, and reflect a tone of faith and trust, specifically in the ${religion} tradition. The prayer should be ${prayerLength} long, begin with "${religiousGreeting}", and end with "${religiousEnding}".` }]
-      },
+      systemInstruction: systemInstruction,
       model: "gemini-2.5-flash-preview-05-20"
     };
 
@@ -97,7 +88,7 @@ exports.handler = async (event) => {
     });
 
     const textResult = await textResponse.json();
-    const prayerText = textResult?.candidates?.[0]?.content?.parts?.[0]?.text;
+    let prayerText = textResult?.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!prayerText) {
       return {
@@ -107,24 +98,38 @@ exports.handler = async (event) => {
       };
     }
 
-    // A simple mapping for voices, you can expand this.
+    // Ensure proper religious structure (fallback in case AI doesn't follow instructions exactly)
+    if (!prayerText.startsWith(religiousGreeting.split(',')[0])) {
+        prayerText = religiousGreeting + '\n\n' + prayerText;
+    }
+    if (!prayerText.includes(religiousEnding.split('.')[0])) {
+        prayerText = prayerText.trim() + '\n\n' + religiousEnding;
+    }
+
+    // Voice configuration with emotional pacing
     const voices = {
       'en-US': 'Kore',
-      'es-US': 'Puck',
+      'es-US': 'Puck', 
       'fr-FR': 'Zephyr',
       'pt-BR': 'Iapetus',
       'it-IT': 'Orus',
       'de-DE': 'Leda'
     };
 
-    // Step 2: Generate Prayer Audio with Gemini TTS
+    // Adjust audio pacing based on emotional context
+    const audioPacing = determineAudioPacing(emotionalContext);
+    
+    // Step 2: Generate Prayer Audio with appropriate pacing
     const audioPayload = {
       contents: [{ parts: [{ text: prayerText }] }],
       generationConfig: {
         responseModalities: ["AUDIO"],
         speechConfig: {
           voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: voices[language] || 'Kore' }
+            prebuiltVoiceConfig: { 
+                voiceName: voices[language] || 'Kore'
+                // Note: Add speaking rate and pause duration if supported by your TTS API
+            }
           }
         }
       },
@@ -148,18 +153,79 @@ exports.handler = async (event) => {
       };
     }
 
+    // Return enhanced response with metadata
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ prayerText, audioData }),
+      body: JSON.stringify({ 
+        prayerText, 
+        audioData,
+        metadata: {
+          emotionalCategory: emotionalContext.category,
+          prayerLength: emotionalContext.config.length,
+          tone: emotionalContext.config.tone,
+          religion: religion,
+          timeOfDay: timeOfDay
+        }
+      }),
     };
 
   } catch (error) {
-    console.error('Error in Netlify function:', error);
+    console.error('Error in enhanced Netlify function:', error);
     return {
       statusCode: 500,
       headers,
       body: JSON.stringify({ error: 'Internal Server Error', details: error.message }),
     };
   }
+};
+
+// Helper function to include the enhanced prompt generation
+const generateEnhancedPrompt = (role, feeling, timeOfDay, religion, challenge, emotionalContext) => {
+    const prayerStructures = {
+        short: {
+            sentences: '2-3 sentences',
+            structure: 'Opening acknowledgment + Core request/gratitude + Closing affirmation'
+        },
+        medium: {
+            sentences: '4-6 sentences', 
+            structure: 'Opening + Personal acknowledgment + Specific request + Comfort/strength + Hope + Closing'
+        },
+        long: {
+            sentences: '6-8 sentences',
+            structure: 'Opening + Deep acknowledgment + Specific situation + Multiple requests + Comfort + Future hope + Trust affirmation + Closing'
+        }
+    };
+    
+    const structure = prayerStructures[emotionalContext.config.length];
+    
+    return `Generate a deeply personal and authentic ${religion} prayer for someone in this exact situation:
+
+PERSONAL CONTEXT:
+- Role: ${role}
+- Current feeling: ${feeling}
+- Time: ${timeOfDay}
+- Specific challenge: "${challenge}"
+
+EMOTIONAL & SPIRITUAL GUIDANCE:
+- Primary emotional need: ${emotionalContext.category}
+- Prayer approach: ${emotionalContext.config.focus}
+- Required tone: ${emotionalContext.config.tone}
+- Spiritual intensity needed: ${emotionalContext.config.intensity}
+
+PRAYER STRUCTURE REQUIREMENTS:
+- Length: ${structure.sentences}
+- Follow this structure: ${structure.structure}
+- Must authentically reflect ${religion} prayer traditions
+- Address their specific challenge and role directly
+- Appropriate for ${timeOfDay} spiritual reflection
+
+AUTHENTICITY REQUIREMENTS:
+- Sound like a prayer that would be offered by someone deeply rooted in ${religion}
+- Use language and concepts familiar to ${religion} practitioners
+- Include appropriate religious concepts and worldview
+- Balance formal religious structure with deeply personal content
+- Avoid generic spiritual language - be specifically ${religion}
+
+The prayer should feel both traditionally ${religion} and perfectly tailored to this person's exact situation.`;
 };
