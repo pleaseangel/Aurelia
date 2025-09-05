@@ -1,1 +1,20 @@
-
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users can read/write their own prayer data
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Prayer history for authenticated users
+    match /prayers/{prayerId} {
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+    }
+    
+    // Prayer analytics (anonymized)
+    match /analytics/{document=**} {
+      allow read, write: if false; // Only server-side access
+    }
+  }
+}
