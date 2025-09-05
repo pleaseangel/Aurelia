@@ -48,7 +48,6 @@ exports.handler = async (event) => {
 
     const religiousGreeting = getReligiousGreeting(religion);
 
-    // Update the prompt to ask for a longer prayer
     const promptText = `Generate a heartfelt, calm, and uplifting prayer in the ${religion} tradition. The person is a ${role} feeling ${feeling}. It is ${timeOfDay}.
     The person has the following specific challenges or needs: "${challenge}".
     The prayer should offer comfort, guidance, and hope, ending in a way that is appropriate for the ${religion} tradition.`;
