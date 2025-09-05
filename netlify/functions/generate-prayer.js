@@ -2,6 +2,18 @@ const fetch = require('node-fetch');
 
 // Enhanced emotional context detection
 const getEmotionalContext = (feeling, challenge) => {
+    if (!feeling || !challenge) {
+        return {
+            category: 'general',
+            config: {
+                intensity: 'medium',
+                length: 'medium',
+                tone: 'comforting',
+                focus: 'peace_and_guidance'
+            }
+        };
+    }
+
     const feelingLower = feeling.toLowerCase();
     const challengeLower = challenge.toLowerCase();
     
@@ -108,18 +120,25 @@ const getReligiousGreeting = (religion, emotionalContext, timeOfDay) => {
                 "Mary, Help of Christians, pray for me in this hour of need."
             ]
         },
+        orthodox: {
+            formal: [
+                "In the name of the Father, and of the Son, and of the Holy Spirit.",
+                "Lord Jesus Christ, Son of God,",
+                "Most Holy Theotokos, pray for us. Lord,"
+            ]
+        },
         muslim: {
             formal: [
-                "Bismillahir Rahmanir Rahim. (In the name of Allah, the Most Gracious, the Most Merciful.)",
-                "Allahumma (O Allah),",
-                "Ya Allah (O Allah),"
+                "Bismillahir Rahmanir Rahim.",
+                "Allahumma,",
+                "Ya Allah,"
             ]
         },
         jewish: {
-            formal: ["Adonai,", "Ribbono shel Olam (Master of the Universe),", "Avinu Malkeinu (Our Father, Our King),"]
+            formal: ["Adonai,", "Ribbono shel Olam,", "Avinu Malkeinu,"]
         },
         hindu: {
-            formal: ["Om Namah Shivaya.", "Om Gam Ganapataye Namaha.", "Paramatma (O Supreme Soul),"]
+            formal: ["Om Namah Shivaya.", "Om Gam Ganapataye Namaha.", "Paramatma,"]
         },
         buddhist: {
             formal: ["May I find peace in this moment,", "With compassionate awareness,", "In the spirit of loving-kindness,"]
@@ -163,15 +182,18 @@ const getReligiousEnding = (religion, emotionalContext) => {
                 "Mary, Mother of God, pray for us sinners, now and at the hour of our death, Amen.",
                 "Through the intercession of the Blessed Virgin Mary, Amen."
             ],
-            trust: ["Jesus, I trust in You. Amen.", "Thy will be done on earth as it is in Heaven. Amen."],
-            liturgical: [
-                "Through Christ our Lord, who lives and reigns with You and the Holy Spirit, one God, forever and ever. Amen."
+            trust: ["Jesus, I trust in You. Amen.", "Thy will be done on earth as it is in Heaven. Amen."]
+        },
+        orthodox: {
+            standard: [
+                "Through the prayers of our holy fathers, Lord Jesus Christ our God, have mercy on us. Amen.",
+                "Glory to the Father, and to the Son, and to the Holy Spirit, now and ever and unto ages of ages. Amen."
             ]
         },
-        muslim: ["Ameen.", "Hasbunallahu wa ni'mal wakeel. Ameen."],
-        jewish: ["Amen.", "Ken yehi ratzon. (May it be Your will.) Amen."],
-        hindu: ["Om Shanti Shanti Shanti.", "Sarve bhavantu sukhinah. (May all beings be happy.) Om Shanti."],
-        buddhist: ["May all beings be happy and free from suffering.", "Gate gate pāragate pārasaṃgate bodhi svāhā."],
+        muslim: ["Ameen.", "Rabbana atina fi'd-dunya hasanatan wa fi'l-akhirati hasanatan wa qina 'adhab an-nar. Ameen."],
+        jewish: ["Amen.", "Ken yehi ratzon. Amen."],
+        hindu: ["Om Shanti Shanti Shanti.", "Sarve bhavantu sukhinah. Om Shanti."],
+        buddhist: ["May all beings be happy and free from suffering.", "Gate gate paragate parasamgate bodhi svaha."],
         interfaith: ["And so it is.", "In love and light.", "May it be so."],
         secular: ["With gratitude and intention.", "In hope and determination.", "With mindful awareness."]
     };
@@ -183,8 +205,6 @@ const getReligiousEnding = (religion, emotionalContext) => {
         category = 'trust';
     } else if (religion === 'catholic' && emotionalContext.config.intensity === 'light' && religionEndings.marian) {
         category = 'marian';
-    } else if (religion === 'catholic' && emotionalContext.config.intensity === 'deep' && religionEndings.liturgical) {
-        category = 'liturgical';
     }
     
     const options = religionEndings[category] || religionEndings.standard || religionEndings;
@@ -246,7 +266,9 @@ const getReligiousSystemInstruction = (religion, emotionalContext) => {
     const guidance = {
         christian: `Follow Protestant Christian prayer traditions: Use biblical language when appropriate, reference God's love and Jesus' sacrifice, emphasize faith and trust in God's plan, include references to scripture principles without direct quotes.`,
 
-        catholic: `Follow Catholic prayer traditions: May include Marian intercession (asking Mary to pray for us), reference to saints as intercessors, Trinitarian structure, liturgical language, concepts of grace and mercy, the Sacred Heart devotion, and eucharistic spirituality. Use formal liturgical language when appropriate. Include phrases like "through Christ our Lord" and proper Trinitarian formulations. Consider devotional elements like "Sacred Heart of Jesus" or "Holy Mary, Mother of God."`,
+        catholic: `Follow Catholic prayer traditions: May include Marian intercession (asking Mary to pray for us), reference to saints as intercessors, Trinitarian structure, liturgical language, concepts of grace and mercy, the Sacred Heart devotion, and eucharistic spirituality. Use formal liturgical language when appropriate. Include phrases like "through Christ our Lord" and proper Trinitarian formulations.`,
+
+        orthodox: `Follow Orthodox Christian prayer traditions: Emphasize the Trinity, Theotokos (Mary as God-bearer), use liturgical language, reference the Jesus Prayer, emphasize theosis (deification), and include proper Orthodox theological concepts.`,
         
         muslim: `Follow Islamic prayer etiquette: Begin with Bismillah, use Arabic phrases appropriately, emphasize Allah's mercy and guidance, reference Islamic principles of patience (sabr) and trust in Allah (tawakkul).`,
         
@@ -286,7 +308,24 @@ exports.handler = async (event) => {
   try {
     const { role, feeling, timeOfDay, language, religion, challenge } = JSON.parse(event.body);
 
+    // Validate required inputs
+    if (!role || !feeling || !challenge || !religion) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'Missing required fields: role, feeling, challenge, religion' }),
+      };
+    }
+
     const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({ error: 'API key not configured' }),
+      };
+    }
+
     const apiBaseUrl = "https://generativelanguage.googleapis.com/v1beta/models/";
 
     // Get enhanced emotional context
@@ -336,87 +375,71 @@ The prayer should sound like it came from someone deeply familiar with ${religio
         }]
     };
 
-    // Step 1: Generate Prayer Text with enhanced prompt
+    // Step 1: Generate Prayer Text with enhanced prompt - USING CURRENT STABLE MODEL
     const textPayload = {
       contents: [{ parts: [{ text: enhancedPrompt }] }],
-      tools: [{ "google_search": {} }],
       systemInstruction: systemInstruction,
-      model: "gemini-2.5-flash-preview-05-20"
+      generationConfig: {
+        temperature: 0.8,
+        topK: 40,
+        topP: 0.95,
+        maxOutputTokens: 1024,
+      }
     };
 
-    const textResponse = await fetch(apiBaseUrl + textPayload.model + ':generateContent?key=' + apiKey, {
+    // Use current stable Gemini model
+    const modelName = "gemini-1.5-flash-latest";
+    const textResponse = await fetch(apiBaseUrl + modelName + ':generateContent?key=' + apiKey, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(textPayload)
     });
 
+    if (!textResponse.ok) {
+      const errorData = await textResponse.text();
+      console.error('Text API Error:', errorData);
+      return {
+        statusCode: textResponse.status,
+        headers,
+        body: JSON.stringify({ 
+          error: 'Failed to generate prayer text',
+          details: `API returned ${textResponse.status}`,
+          apiError: errorData
+        }),
+      };
+    }
+
     const textResult = await textResponse.json();
     let prayerText = textResult?.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!prayerText) {
+      console.error('No prayer text in response:', textResult);
       return {
-        statusCode: textResponse.status,
+        statusCode: 500,
         headers,
-        body: JSON.stringify({ error: 'Failed to generate prayer text.' }),
+        body: JSON.stringify({ 
+          error: 'Failed to generate prayer text - no content returned',
+          apiResponse: textResult
+        }),
       };
     }
 
     // Ensure proper religious structure (fallback in case AI doesn't follow instructions exactly)
-    if (!prayerText.startsWith(religiousGreeting.split(',')[0])) {
+    if (!prayerText.trim().startsWith(religiousGreeting.split(',')[0].trim())) {
         prayerText = religiousGreeting + '\n\n' + prayerText;
     }
     if (!prayerText.includes(religiousEnding.split('.')[0])) {
         prayerText = prayerText.trim() + '\n\n' + religiousEnding;
     }
 
-    // Voice configuration
-    const voices = {
-      'en-US': 'Kore',
-      'es-US': 'Puck',
-      'fr-FR': 'Zephyr',
-      'pt-BR': 'Iapetus',
-      'it-IT': 'Orus',
-      'de-DE': 'Leda'
-    };
-
-    // Step 2: Generate Prayer Audio with Gemini TTS
-    const audioPayload = {
-      contents: [{ parts: [{ text: prayerText }] }],
-      generationConfig: {
-        responseModalities: ["AUDIO"],
-        speechConfig: {
-          voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: voices[language] || 'Kore' }
-          }
-        }
-      },
-      model: "gemini-2.5-flash-preview-tts"
-    };
-
-    const audioResponse = await fetch(apiBaseUrl + audioPayload.model + ':generateContent?key=' + apiKey, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(audioPayload)
-    });
-
-    const audioResult = await audioResponse.json();
-    const audioData = audioResult?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-
-    if (!audioData) {
-      return {
-        statusCode: audioResponse.status,
-        headers,
-        body: JSON.stringify({ error: 'Failed to generate audio.' }),
-      };
-    }
-
-    // Return enhanced response with metadata
+    // For now, return just the text without audio to avoid TTS issues
+    // Audio generation can be added back once TTS endpoint is confirmed working
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({ 
         prayerText, 
-        audioData,
+        audioData: null, // Temporarily disabled
         metadata: {
           emotionalCategory: emotionalContext.category,
           prayerLength: emotionalContext.config.length,
@@ -434,7 +457,11 @@ The prayer should sound like it came from someone deeply familiar with ${religio
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ error: 'Internal Server Error', details: error.message }),
+      body: JSON.stringify({ 
+        error: 'Internal Server Error', 
+        details: error.message,
+        stack: error.stack
+      }),
     };
   }
 };
