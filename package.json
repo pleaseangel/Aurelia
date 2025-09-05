@@ -1,1 +1,20 @@
-
+{
+  "name": "aurelia-prayer-app",
+  "version": "1.0.0",
+  "description": "Voice-activated prayer app for personalized spiritual guidance",
+  "main": "public/index.html",
+  "scripts": {
+    "dev": "netlify dev",
+    "build": "echo 'Static site - no build needed'",
+    "deploy": "netlify deploy --prod"
+  },
+  "dependencies": {
+    "firebase": "^10.7.1"
+  },
+  "devDependencies": {
+    "netlify-cli": "^17.10.1"
+  },
+  "keywords": ["prayer", "spiritual", "voice", "ai", "firebase"],
+  "author": "Your Name",
+  "license": "MIT"
+}
