@@ -27,17 +27,38 @@ exports.handler = async (event) => {
     const apiKey = process.env.GEMINI_API_KEY;
     const apiBaseUrl = "https://generativelanguage.googleapis.com/v1beta/models/";
 
-    const promptText = `Generate a heartfelt, calm, and uplifting prayer in the ${religion} tradition in ${new Intl.DisplayNames(['en'], { type: 'language' }).of(language)}.
-    The person is a ${role} feeling ${feeling}. It is ${timeOfDay}. 
+    const getReligiousGreeting = (religion) => {
+        switch(religion.toLowerCase()) {
+            case 'christian':
+                return 'Dear Heavenly Father,';
+            case 'jewish':
+                return 'Adonai,';
+            case 'islamic':
+                return 'In the name of Allah, the Most Gracious, the Most Merciful.';
+            case 'buddhist':
+                return 'May I find peace in this moment,';
+            case 'hindu':
+                return 'Oh Divine One,';
+            case 'spiritual':
+                return 'Oh Universe,';
+            default:
+                return 'To the Divine,';
+        }
+    };
+
+    const religiousGreeting = getReligiousGreeting(religion);
+
+    // Update the prompt to ask for a longer prayer
+    const promptText = `Generate a heartfelt, calm, and uplifting prayer in the ${religion} tradition. The person is a ${role} feeling ${feeling}. It is ${timeOfDay}.
     The person has the following specific challenges or needs: "${challenge}".
-    Keep the prayer 4 to 5 sentences and keep it thoughtful and comforting, directly addressing the provided feelings and challenges.`;
+    The prayer should offer comfort, guidance, and hope, ending in a way that is appropriate for the ${religion} tradition.`;
 
     // Step 1: Generate Prayer Text with Gemini
     const textPayload = {
       contents: [{ parts: [{ text: promptText }] }],
       tools: [{ "google_search": {} }],
       systemInstruction: {
-        parts: [{ text: `You are a kind and compassionate spiritual guide. Your sole purpose is to generate beautiful and personal prayers that offer comfort and hope. The prayers should be gentle and supportive, especially for a mother, and reflect a tone of faith and trust, specifically in the ${religion} tradition.`Christian religion must begin with "our father , or heavenly father, Dear Lord }]
+        parts: [{ text: `You are a kind and compassionate spiritual guide. Your sole purpose is to generate beautiful and personal prayers that offer comfort and hope. The prayers should be gentle and supportive, especially for a mother, and reflect a tone of faith and trust, specifically in the ${religion} tradition. The prayer should be 5 to 7 sentences long and always begin with the greeting: "${religiousGreeting}".` }]
       },
       model: "gemini-2.5-flash-preview-05-20"
     };
