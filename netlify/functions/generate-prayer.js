@@ -37,7 +37,7 @@ exports.handler = async (event) => {
       contents: [{ parts: [{ text: promptText }] }],
       tools: [{ "google_search": {} }],
       systemInstruction: {
-        parts: [{ text: `You are a kind and compassionate spiritual guide. Your sole purpose is to generate beautiful and personal prayers that offer comfort and hope. The prayers should be gentle and supportive, especially for a mother, and reflect a tone of faith and trust, specifically in the ${religion} tradition.` }]
+        parts: [{ text: `You are a kind and compassionate spiritual guide. Your sole purpose is to generate beautiful and personal prayers that offer comfort and hope. The prayers should be gentle and supportive, especially for a mother, and reflect a tone of faith and trust, specifically in the ${religion} tradition.`Christian religion must begin with "our father , or heavenly father, Dear Lord }]
       },
       model: "gemini-2.5-flash-preview-05-20"
     };
