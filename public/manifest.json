@@ -1,23 +1,101 @@
 {
-  "name": "Aurelia - Prayer App",
+  "name": "Aurelia - Voice-Activated Prayer App",
   "short_name": "Aurelia",
-  "description": "Voice-activated prayer app for personalized spiritual guidance",
+  "description": "A personalized prayer companion that generates meaningful prayers based on your specific needs and faith tradition",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ea9ab2",
   "theme_color": "#efcfe3",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["lifestyle", "health", "productivity"],
+  "screenshots": [
+    {
+      "src": "/screenshot-mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Aurelia on mobile device"
+    },
+    {
+      "src": "/screenshot-desktop.png", 
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Aurelia on desktop"
+    }
+  ],
   "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "16x16",
+      "type": "image/x-icon"
+    },
     {
       "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any maskable"
     },
     {
       "src": "/icon-512.png",
-      "sizes": "512x512",
+      "sizes": "512x512", 
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Morning Prayer",
+      "short_name": "Morning",
+      "description": "Generate a morning prayer",
+      "url": "/?time=morning",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Evening Prayer", 
+      "short_name": "Evening",
+      "description": "Generate an evening prayer",
+      "url": "/?time=evening",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Personal Prayer",
+      "short_name": "Personal",
+      "description": "Create a personal prayer request",
+      "url": "/?personal=true",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "protocol_handlers": [
+    {
+      "protocol": "web+aurelia",
+      "url": "/?prayer=%s"
     }
   ]
 }
