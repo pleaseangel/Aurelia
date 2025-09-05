@@ -30,7 +30,7 @@ exports.handler = async (event) => {
     const promptText = `Generate a heartfelt, calm, and uplifting prayer in the ${religion} tradition in ${new Intl.DisplayNames(['en'], { type: 'language' }).of(language)}.
     The person is a ${role} feeling ${feeling}. It is ${timeOfDay}. 
     The person has the following specific challenges or needs: "${challenge}".
-    Keep the prayer thoughtful and comforting, directly addressing the provided feelings and challenges.`;
+    Keep the prayer 4 to 5 sentences and keep it thoughtful and comforting, directly addressing the provided feelings and challenges.`;
 
     // Step 1: Generate Prayer Text with Gemini
     const textPayload = {
